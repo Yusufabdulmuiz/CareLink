@@ -1,8 +1,18 @@
-# 🏥 CareLink
+<h1 align="center">🏥 CareLink</h1>
 
-> A lightweight payment verification system for diagnostic centers, powered by Nomba Checkout.
+<p align="center">
+A lightweight payment verification system for diagnostic centers, powered by Nomba Checkout.
+</p>
 
-Built for the **DevCareer × Nomba Hackathon**.
+<p align="center">
+Built for the <strong>DevCareer × Nomba Hackathon</strong>
+</p>
+
+## 🔗 Live Demo
+
+Frontend: https://care-link-nine.vercel.app
+
+Backend: https://carelink-backend-5iet.onrender.com
 
 ## The Problem
 
