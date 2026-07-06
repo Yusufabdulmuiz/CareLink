@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { UserPlus, Send, Copy, Check, AlertCircle, RefreshCw, MessageSquare } from 'lucide-react';
 
@@ -23,6 +23,27 @@ const NewPatient = () => {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [generatedBill, setGeneratedBill] = useState(null);
+
+  useEffect(() => {
+    if (!generatedBill || generatedBill.status === 'paid') return;
+
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/api/patients`);
+        const updatedRecord = res.data.find(p => p.orderReference === generatedBill.orderReference);
+
+        if (updatedRecord && updatedRecord.status === 'paid') {
+          setGeneratedBill(updatedRecord);
+        }
+      } catch (err) {
+        console.error('Polling check failed:', err.message);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [generatedBill]);
 
   const handleTestChange = (e) => {
     const selectedName = e.target.value;
@@ -82,23 +103,24 @@ const NewPatient = () => {
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   };
 
+  const isPaid = generatedBill?.status === 'paid';
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 px-1 sm:px-0">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          <UserPlus className="text-teal-600" size={28} />
-          Generate New Patient Medical Bill
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <UserPlus className="text-teal-600 shrink-0" size={24} />
+          <span>Generate New Patient Medical Bill</span>
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Create a secure Nomba checkout reference and send automated billing links directly to the patient's WhatsApp.
-        </p>
+        <p className="text-slate-500 text-xs sm:text-sm mt-1 leading-relaxed">
+          Generate a unique, secure billing reference and forward payment instructions instantly to the patient via WhatsApp        </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Patient Full Name</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">Patient Full Name</label>
               <input
                 type="text"
                 name="name"
@@ -106,12 +128,12 @@ const NewPatient = () => {
                 placeholder="e.g., Amina Ibrahim"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
+                className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">WhatsApp Phone Number</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">WhatsApp Phone Number</label>
               <input
                 type="tel"
                 name="phone"
@@ -119,19 +141,19 @@ const NewPatient = () => {
                 placeholder="08012345678"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
+                className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Diagnostic Test Type</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">Diagnostic Test Type</label>
               <select
                 name="testType"
                 value={formData.testType}
                 onChange={handleTestChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
+                className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
               >
                 {TEST_TYPES.map((test, index) => (
                   <option key={index} value={test.name}>{test.name}</option>
@@ -140,7 +162,7 @@ const NewPatient = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Total Amount (₦)</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">Total Amount (₦)</label>
               <input
                 type="number"
                 name="amount"
@@ -148,14 +170,14 @@ const NewPatient = () => {
                 placeholder="Enter bill amount"
                 value={formData.amount}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
+                className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-base font-semibold focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700 text-sm">
-              <AlertCircle size={20} className="shrink-0" />
+            <div className="p-3.5 sm:p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 sm:gap-3 text-red-700 text-xs sm:text-sm">
+              <AlertCircle size={18} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -163,17 +185,17 @@ const NewPatient = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3.5 sm:py-4 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
-                <RefreshCw size={20} className="animate-spin" />
-                Generating Nomba Payment Link...
+                <RefreshCw size={18} className="animate-spin shrink-0" />
+                <span>Generating Link...</span>
               </>
             ) : (
               <>
-                <Send size={20} />
-                Generate Secure Payment Link
+                <Send size={18} className="shrink-0" />
+                <span>Generate Secure Payment Link</span>
               </>
             )}
           </button>
@@ -181,51 +203,55 @@ const NewPatient = () => {
       </div>
 
       {generatedBill && (
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl p-8 shadow-md animate-fade-in space-y-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 mb-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                Status: {generatedBill.status || 'pending'} (Waiting for Nomba Webhook)
-              </span>
-              <h3 className="text-xl font-bold text-slate-800">Payment Invoice Generated!</h3>
-              <p className="text-sm text-slate-600 mt-1">
-                Patient ID: <span className="font-mono font-semibold text-slate-800">{generatedBill.id}</span>
-              </p>
-            </div>
-          </div>
+      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl p-5 sm:p-8 shadow-md animate-fade-in space-y-5 sm:space-y-6">
+  <div>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-2.5 transition-colors ${
+      isPaid 
+        ? 'bg-emerald-100 text-emerald-800 border-emerald-400' 
+        : 'bg-amber-100 text-amber-800 border-amber-300'
+    }`}>
+      {!isPaid && <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0"></span>}
+      {isPaid && <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>}
+      <span>{isPaid ? 'PAYMENT VERIFIED' : 'AWAITING PATIENT PAYMENT'}</span>
+    </span>
+    
+    <h3 className="text-lg sm:text-xl font-bold text-slate-800">Billing Reference Generated</h3>
+    <p className="text-xs sm:text-sm text-slate-600 mt-1">
+      Transaction ID: <span className="font-mono font-semibold text-slate-800">{generatedBill.id}</span>
+    </p>
+  </div>
 
-          <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
-            <div className="overflow-hidden">
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Nomba Checkout URL</p>
-              <p className="text-sm font-mono text-teal-700 truncate font-medium mt-0.5">
-                {generatedBill.checkoutUrl}
-              </p>
-            </div>
-            <button
-              onClick={() => handleCopy(generatedBill.checkoutUrl)}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-semibold shrink-0"
-            >
-              {copied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
-              {copied ? 'Copied!' : 'Copy Link'}
-            </button>
-          </div>
+  <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+    <div className="overflow-hidden w-full">
+      <p className="text-[10px] sm:text-xs text-slate-400 font-semibold uppercase tracking-wider">Secure Payment Portal</p>
+      <p className="text-xs sm:text-sm font-mono text-teal-700 truncate font-medium mt-0.5">
+        {generatedBill.checkoutUrl}
+      </p>
+    </div>
+    <button
+      onClick={() => handleCopy(generatedBill.checkoutUrl)}
+      className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold shrink-0"
+    >
+      {copied ? <Check size={15} className="text-emerald-600" /> : <Copy size={15} />}
+      <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+    </button>
+  </div>
 
-          <div className="pt-2">
-            <a
-              href={getWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-4 bg-[#25D366] hover:bg-[#1ebd5b] text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-3 text-base"
-            >
-              <MessageSquare size={22} fill="currentColor" />
-              Send Pre-filled Invoice via WhatsApp
-            </a>
-            <p className="text-center text-xs text-slate-500 mt-2.5">
-              Clicking this opens WhatsApp with a pre-written message containing the test details and Nomba payment link.
-            </p>
-          </div>
-        </div>
+  <div className="pt-1">
+    <a
+      href={getWhatsAppUrl()}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-full py-3.5 sm:py-4 bg-[#25D366] hover:bg-[#1ebd5b] active:bg-[#19a54f] text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2.5 text-sm sm:text-base px-2 text-center"
+    >
+      <MessageSquare size={20} fill="currentColor" className="shrink-0" />
+      <span>Forward Billing Details to Patient</span>
+    </a>
+    <p className="text-center text-[11px] sm:text-xs text-slate-500 mt-2">
+      This will open a secure WhatsApp session with the patient containing their lab test details and payment portal.
+    </p>
+  </div>
+</div>
       )}
     </div>
   );

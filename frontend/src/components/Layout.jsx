@@ -19,7 +19,7 @@ const Layout = ({ children }) => {
   const navItems = [
     { name: 'Dashboard Overview', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'Recent Patients', path: '/patients', icon: <Users size={20} /> },
-    { name: 'Add / New Patient', path: '/new-patient', icon: <UserPlus size={20} /> },
+    { name: 'New Patient', path: '/new-patient', icon: <UserPlus size={20} /> },
   ];
 
   return (
@@ -83,7 +83,7 @@ const Layout = ({ children }) => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 shrink-0 gap-3 sm:gap-4">
+        <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm flex items-center justify-between px-4 sm:px-8 shrink-0 gap-3 sm:gap-4">
           <div className="flex items-center gap-3 lg:hidden shrink-0">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -98,7 +98,7 @@ const Layout = ({ children }) => {
             </span>
           </div>
 
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-md hidden sm:block">
             <Search className="absolute left-3.5 top-2.5 text-slate-400" size={18} />
             <input 
               type="text" 

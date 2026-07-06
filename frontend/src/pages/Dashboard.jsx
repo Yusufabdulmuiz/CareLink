@@ -24,29 +24,28 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true; 
 
-    const loadDashboardData = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
         const response = await axios.get(`${apiUrl}/api/patients`);
-        if (isMounted) {
+        
+        if (isMounted) { 
           setPatients(Array.isArray(response.data) ? response.data : []);
         }
       } catch (err) {
-        if (isMounted) {
-          console.error('Error loading dashboard stats:', err);
-        }
+        if (isMounted) console.error('Error:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
-    loadDashboardData();
+    loadData();
 
     return () => {
-      isMounted = false;
+      isMounted = false; 
     };
   }, []);
 
@@ -70,131 +69,97 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 px-2 sm:px-0">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <LayoutDashboard className="text-teal-600" size={28} />
-            Clinic Overview Dashboard
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <LayoutDashboard className="text-teal-600 shrink-0" size={24} />
+            Clinic Overview
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Real-time billing performance and Nomba payment reconciliation analytics.
-          </p>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">Real-time payment analytics.</p>
         </div>
         <button
           onClick={fetchDashboardData}
-          className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-all"
-          title="Refresh Statistics"
+          className="p-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-all"
         >
           <RefreshCw size={18} className={loading ? 'animate-spin text-teal-600' : ''} />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-teal-50 text-teal-600 rounded-xl">
-            <Users size={24} />
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Stat Cards remain same but responsive grid makes them work perfectly */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-teal-50 text-teal-600 rounded-xl"><Users size={20} /></div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Bills Generated</p>
-            <h3 className="text-2xl font-black text-slate-800 mt-1">{loading ? '...' : totalBills}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Bills</p>
+            <h3 className="text-xl font-black text-slate-800">{loading ? '...' : totalBills}</h3>
           </div>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-amber-50 text-amber-600 rounded-xl">
-            <Clock size={24} />
-          </div>
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><Clock size={20} /></div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Reconciliation</p>
-            <h3 className="text-2xl font-black text-slate-800 mt-1">
-              {loading ? '...' : `₦${pendingRevenue.toLocaleString()}`}
-            </h3>
-            <p className="text-[11px] text-amber-600 font-medium">{pendingPatients.length} bills pending</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Pending</p>
+            <h3 className="text-xl font-black text-slate-800">{loading ? '...' : `₦${pendingRevenue.toLocaleString()}`}</h3>
           </div>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
-            <CheckCircle2 size={24} />
-          </div>
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={20} /></div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Confirmed Revenue</p>
-            <h3 className="text-2xl font-black text-slate-800 mt-1">
-              {loading ? '...' : `₦${totalRevenue.toLocaleString()}`}
-            </h3>
-            <p className="text-[11px] text-emerald-600 font-medium">{paidPatients.length} bills settled</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase">Revenue</p>
+            <h3 className="text-xl font-black text-slate-800">{loading ? '...' : `₦${totalRevenue.toLocaleString()}`}</h3>
           </div>
         </div>
-
-        <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-2xl shadow-md text-white flex flex-col justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider opacity-80">Fast Checkout</p>
-            <h4 className="text-lg font-bold mt-1">New Patient Bill</h4>
-          </div>
-          <Link
-            to="/new-patient"
-            className="mt-4 inline-flex items-center justify-between bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-          >
-            Generate Link <ArrowRight size={14} />
+        <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-5 rounded-2xl shadow-md text-white flex flex-col justify-between">
+          <p className="text-[10px] font-bold uppercase opacity-80">Quick Action</p>
+          <Link to="/new-patient" className="mt-2 flex items-center justify-between bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl text-xs font-bold transition-all">
+            New Patient Bill <ArrowRight size={14} />
           </Link>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-sm space-y-6">
         <div>
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
             <Search className="text-teal-600" size={20} />
-            Instant Patient Status Verification
+            Patient Status Verification
           </h3>
-          <p className="text-slate-500 text-sm mt-1">
-            Quickly verify payment confirmation before admitting a patient into diagnostic lab rooms.
-          </p>
+          <p className="text-slate-500 text-xs mt-1">Verify payment before lab admission.</p>
         </div>
 
-        <form onSubmit={handleQuickLookup} className="flex gap-4">
+        <form onSubmit={handleQuickLookup} className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
-            placeholder="Enter Patient ID (e.g., pat_1783...), phone number, or name..."
+            placeholder="Search by ID, Phone, or Name..."
             value={quickSearch}
             onChange={(e) => { setQuickSearch(e.target.value); setHasSearched(false); }}
-            className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 outline-none"
           />
-          <button
-            type="submit"
-            className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm transition-all shadow-sm"
-          >
+          <button type="submit" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm transition-all whitespace-nowrap">
             Check Status
           </button>
         </form>
 
         {hasSearched && (
-          <div className="p-6 rounded-xl border transition-all animate-fade-in">
+          <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 transition-all">
             {searchResult ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <span className="text-xs font-mono font-semibold text-slate-400">{searchResult.id}</span>
-                  <h4 className="text-lg font-bold text-slate-800 mt-0.5">{searchResult.name}</h4>
-                  <p className="text-sm text-slate-600">{searchResult.testType} — <span className="font-bold">₦{Number(searchResult.amount).toLocaleString()}</span></p>
+                  <p className="text-[10px] font-mono font-bold text-slate-400">{searchResult.id}</p>
+                  <h4 className="font-bold text-slate-800">{searchResult.name}</h4>
+                  <p className="text-xs text-slate-600">{searchResult.testType} • ₦{Number(searchResult.amount).toLocaleString()}</p>
                 </div>
-                <div>
-                  {searchResult.status && searchResult.status.toLowerCase() === 'paid' ? (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      <CheckCircle2 size={18} className="text-emerald-600" />
-                      CLEARED FOR LAB (PAID)
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                      <Clock size={18} className="text-amber-600" />
-                      PAYMENT PENDING
-                    </span>
-                  )}
-                </div>
+                {searchResult.status?.toLowerCase() === 'paid' ? (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <CheckCircle2 size={14} /> CLEARED
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    <Clock size={14} /> PENDING
+                  </span>
+                )}
               </div>
             ) : (
-              <p className="text-center text-sm text-slate-500 font-medium py-2">
-                No patient record found matching "<span className="font-bold">{quickSearch}</span>".
-              </p>
+              <p className="text-center text-xs text-slate-500">No matching record found.</p>
             )}
           </div>
         )}

@@ -80,14 +80,14 @@ const Patients = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Users className="text-teal-600" size={28} />
-            Recent Patients & Payment Records
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Real-time synchronization from local database (<code className="bg-slate-100 text-teal-700 px-1.5 py-0.5 rounded text-xs font-mono">GET /api/patients</code>).
-          </p>
+       <div>
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+           <Users className="text-teal-600" size={28} />
+                   Recent Patients
+           </h1>
+        <p className="text-slate-500 text-sm mt-1">
+          View and manage billing records for all patients registered in the clinic.
+        </p>
         </div>
 
         <button
