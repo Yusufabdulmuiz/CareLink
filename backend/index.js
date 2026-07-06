@@ -36,11 +36,13 @@ const savePatientsToFile = (data) => {
     }
 };
 
+// Route 1: Fetch all patients
 app.get('/api/patients', (req, res) => {
     const patients = getPatientsFromFile();
     res.status(200).json(patients);
 });
 
+// Route 2: Create a bill & generate Nomba checkout link
 app.post('/api/patients', async (req, res) => {
     const { name, phone, testType, amount } = req.body;
     const orderReference = `ORD-${Date.now()}`;
@@ -52,7 +54,8 @@ app.post('/api/patients', async (req, res) => {
                 amount: amount.toString(),
                 currency: "NGN",
                 customerEmail: "test@carelink.com",
-                accountId: process.env.NOMBA_SUB_ACCOUNT_ID
+                accountId: process.env.NOMBA_SUB_ACCOUNT_ID,
+                callbackUrl: "https://carelink-backend-5iet.onrender.com/api/webhook"
             }
         };
 
@@ -87,6 +90,7 @@ app.post('/api/patients', async (req, res) => {
     }
 });
 
+// Route 3: Secure Server Webhook (POST)
 app.post('/api/webhook', (req, res) => {
     const nombaSignature = req.headers['nomba-signature'];
     const webhookKey = process.env.NOMBA_WEBHOOK_KEY;
@@ -97,7 +101,6 @@ app.post('/api/webhook', (req, res) => {
             .digest('hex');
 
         if (hash !== nombaSignature) {
-            console.warn("Unauthorized webhook attempt blocked.");
             return res.status(401).send('Unauthorized request');
         }
     }
@@ -115,11 +118,27 @@ app.post('/api/webhook', (req, res) => {
         if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {
             patients[patientIndex].status = "paid";
             savePatientsToFile(patients);
-            console.log(`Order ${ref} updated to paid via secure webhook.`);
         }
     }
 
     res.status(200).send('Webhook processed');
+});
+
+// Route 4: Minimal Browser Redirect Catch (GET) - Prevents 404 errors on phone screen
+app.get('/api/webhook', (req, res) => {
+    const ref = req.query.orderReference || req.query.merchantTxRef || req.query.txref;
+
+    if (ref) {
+        const patients = getPatientsFromFile();
+        const patientIndex = patients.findIndex(p => p.orderReference === ref);
+
+        if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {
+            patients[patientIndex].status = "paid";
+            savePatientsToFile(patients);
+        }
+    }
+
+    res.status(200).send('Payment verified. You may close this tab.');
 });
 
 app.listen(PORT, () => {
