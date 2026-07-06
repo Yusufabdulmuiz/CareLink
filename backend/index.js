@@ -20,10 +20,8 @@ const getPatientsFromFile = () => {
             fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
             return [];
         }
-        const fileData = fs.readFileSync(DATA_FILE, 'utf-8');
-        return JSON.parse(fileData || '[]');
+        return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8') || '[]');
     } catch (error) {
-        console.error("File Read Error:", error.message);
         return [];
     }
 };
@@ -31,24 +29,19 @@ const getPatientsFromFile = () => {
 const savePatientsToFile = (data) => {
     try {
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error("File Write Error:", error.message);
-    }
+    } catch (error) {}
 };
 
-// Route 1: Fetch all patients
 app.get('/api/patients', (req, res) => {
-    const patients = getPatientsFromFile();
-    res.status(200).json(patients);
+    res.status(200).json(getPatientsFromFile());
 });
 
-// Route 2: Create a bill & generate Nomba checkout link
 app.post('/api/patients', async (req, res) => {
     const { name, phone, testType, amount } = req.body;
     const orderReference = `ORD-${Date.now()}`;
 
     try {
-        const nombaPayload = {
+        const response = await axios.post('https://sandbox.nomba.com/v1/checkout/order', {
             order: {
                 orderReference,
                 amount: amount.toString(),
@@ -57,16 +50,9 @@ app.post('/api/patients', async (req, res) => {
                 accountId: process.env.NOMBA_SUB_ACCOUNT_ID,
                 callbackUrl: "https://carelink-backend-5iet.onrender.com/api/webhook"
             }
-        };
-
-        const response = await axios.post('https://sandbox.nomba.com/v1/checkout/order', nombaPayload, {
-            headers: { 
-                'Content-Type': 'application/json',
-                'accountId': process.env.NOMBA_PARENT_ACCOUNT_ID 
-            }
+        }, {
+            headers: { 'Content-Type': 'application/json', 'accountId': process.env.NOMBA_PARENT_ACCOUNT_ID }
         });
-
-        const checkoutUrl = response.data.data.checkoutLink;
 
         const newPatient = {
             id: `pat_${Date.now()}`,
@@ -76,7 +62,7 @@ app.post('/api/patients', async (req, res) => {
             testType,
             amount,
             status: "pending",
-            checkoutUrl
+            checkoutUrl: response.data.data.checkoutLink
         };
 
         const patients = getPatientsFromFile();
@@ -85,12 +71,10 @@ app.post('/api/patients', async (req, res) => {
 
         res.status(201).json(newPatient);
     } catch (error) {
-        console.error("Nomba Checkout Error:", error.response?.data || error.message);
         res.status(500).json({ error: "Failed to generate payment link" });
     }
 });
 
-// Route 3: Background Server Webhook (POST)
 app.post('/api/webhook', (req, res) => {
     const nombaSignature = req.headers['nomba-signature'];
     const webhookKey = process.env.NOMBA_WEBHOOK_KEY;
@@ -100,15 +84,10 @@ app.post('/api/webhook', (req, res) => {
             .update(JSON.stringify(req.body))
             .digest('hex');
 
-        if (hash !== nombaSignature) {
-            return res.status(401).send('Unauthorized request');
-        }
+        if (hash !== nombaSignature) return res.status(401).send('Unauthorized');
     }
 
-    const ref = req.body.data?.transaction?.merchantTxRef || 
-                req.body.data?.orderReference || 
-                req.body.orderReference;
-                
+    const ref = req.body.data?.transaction?.merchantTxRef || req.body.data?.orderReference || req.body.orderReference;
     const eventType = req.body.event_type || req.body.status;
 
     if (ref && (eventType === 'payment_success' || eventType === 'SUCCESS')) {
@@ -120,11 +99,9 @@ app.post('/api/webhook', (req, res) => {
             savePatientsToFile(patients);
         }
     }
-
-    res.status(200).send('Webhook processed');
+    res.status(200).send('OK');
 });
 
-// Route 4: Catches Nomba browser redirect, updates DB to paid, prevents 404
 app.get('/api/webhook', (req, res) => {
     const ref = req.query.orderReference || req.query.merchantTxRef || req.query.txref;
 
@@ -137,10 +114,7 @@ app.get('/api/webhook', (req, res) => {
             savePatientsToFile(patients);
         }
     }
-
-    res.status(200).send('Payment verified. You may close this tab.');
+    res.status(200).send('Payment verified.');
 });
 
-app.listen(PORT, () => {
-    console.log(`CareLink server running on port ${PORT}`);
-});
+app.listen(PORT);
