@@ -90,7 +90,7 @@ app.post('/api/patients', async (req, res) => {
     }
 });
 
-// Route 3: Secure Server Webhook (POST)
+// Route 3: Background Server Webhook (POST)
 app.post('/api/webhook', (req, res) => {
     const nombaSignature = req.headers['nomba-signature'];
     const webhookKey = process.env.NOMBA_WEBHOOK_KEY;
@@ -124,7 +124,7 @@ app.post('/api/webhook', (req, res) => {
     res.status(200).send('Webhook processed');
 });
 
-// Route 4: Minimal Browser Redirect Catch (GET) - Prevents 404 errors on phone screen
+// Route 4: Catches Nomba browser redirect, updates DB to paid, prevents 404
 app.get('/api/webhook', (req, res) => {
     const ref = req.query.orderReference || req.query.merchantTxRef || req.query.txref;
 
