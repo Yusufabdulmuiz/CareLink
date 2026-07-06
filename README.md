@@ -103,6 +103,6 @@ PORT=5000
 
 ## Author
 
-**Abdulmuiz Yusuf Olasunkanmi**
+**Yusuf Abdulmuiz Olasunkanmi**
 
 Built for the **DevCareer × Nomba Hackathon**.
