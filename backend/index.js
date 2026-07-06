@@ -51,7 +51,9 @@ app.post('/api/patients', async (req, res) => {
                 orderReference,
                 amount: amount.toString(),
                 currency: "NGN",
-                customerEmail: "test@carelink.com"
+                customerEmail: "test@carelink.com",
+                callbackUrl: "https://carelink-backend-5iet.onrender.com/api/webhook" 
+
             }
         };
 
