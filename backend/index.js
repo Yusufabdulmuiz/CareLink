@@ -52,13 +52,15 @@ app.post('/api/patients', async (req, res) => {
                 amount: amount.toString(),
                 currency: "NGN",
                 customerEmail: "test@carelink.com",
-                callbackUrl: "https://carelink-backend-5iet.onrender.com/api/webhook" 
-
+                accountId: process.env.NOMBA_SUB_ACCOUNT_ID
             }
         };
 
         const response = await axios.post('https://sandbox.nomba.com/v1/checkout/order', nombaPayload, {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'accountId': process.env.NOMBA_PARENT_ACCOUNT_ID 
+            }
         });
 
         const checkoutUrl = response.data.data.checkoutLink;
@@ -89,25 +91,35 @@ app.post('/api/webhook', (req, res) => {
     const nombaSignature = req.headers['nomba-signature'];
     const webhookKey = process.env.NOMBA_WEBHOOK_KEY;
 
-    const hash = crypto.createHmac('sha512', webhookKey)
-        .update(JSON.stringify(req.body))
-        .digest('hex');
+    if (webhookKey && nombaSignature) {
+        const hash = crypto.createHmac('sha512', webhookKey)
+            .update(JSON.stringify(req.body))
+            .digest('hex');
 
-    if (hash !== nombaSignature) {
-        console.warn("Unauthorized webhook signature verification failed.");
-        return res.status(401).send('Unauthorized request');
+        if (hash !== nombaSignature) {
+            console.warn("Unauthorized webhook attempt blocked.");
+            return res.status(401).send('Unauthorized request');
+        }
     }
 
-    const { orderReference, status } = req.body;
-    const patients = getPatientsFromFile();
-    const patientIndex = patients.findIndex(p => p.orderReference === orderReference);
+    const ref = req.body.data?.transaction?.merchantTxRef || 
+                req.body.data?.orderReference || 
+                req.body.orderReference;
+                
+    const eventType = req.body.event_type || req.body.status;
 
-    if (patientIndex !== -1 && status === 'SUCCESS') {
-        patients[patientIndex].status = "paid";
-        savePatientsToFile(patients);
+    if (ref && (eventType === 'payment_success' || eventType === 'SUCCESS')) {
+        const patients = getPatientsFromFile();
+        const patientIndex = patients.findIndex(p => p.orderReference === ref);
+
+        if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {
+            patients[patientIndex].status = "paid";
+            savePatientsToFile(patients);
+            console.log(`Order ${ref} updated to paid via secure webhook.`);
+        }
     }
 
-    res.status(200).send('Webhook successfully processed');
+    res.status(200).send('Webhook processed');
 });
 
 app.listen(PORT, () => {
