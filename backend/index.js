@@ -48,7 +48,7 @@ app.post('/api/patients', async (req, res) => {
                 currency: "NGN",
                 customerEmail: "test@carelink.com",
                 accountId: process.env.NOMBA_SUB_ACCOUNT_ID,
-                callbackUrl: "https://carelink-backend-5iet.onrender.com/api/webhook"
+                callbackUrl:`${process.env.BASE_URL}/api/webhook`
             }
         }, {
             headers: { 'Content-Type': 'application/json', 'accountId': process.env.NOMBA_PARENT_ACCOUNT_ID }
@@ -114,7 +114,40 @@ app.get('/api/webhook', (req, res) => {
             savePatientsToFile(patients);
         }
     }
-    res.status(200).send('Payment verified.');
+    res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+<title>CareLink</title>
+<style>
+body{
+font-family:Arial;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:#f5fffc;
+}
+.card{
+padding:40px;
+border-radius:12px;
+box-shadow:0 5px 20px rgba(0,0,0,.08);
+text-align:center;
+}
+h2{
+color:#0d9488;
+}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>✅ Payment Verified</h2>
+<p>Your payment has been received successfully.</p>
+<p>You may now close this page.</p>
+</div>
+</body>
+</html>
+`);
 });
 
 app.listen(PORT);

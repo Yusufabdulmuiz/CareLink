@@ -1,12 +1,12 @@
-<h1 align="center">🏥 CareLink</h1>
-
 <p align="center">
-A lightweight payment verification system for diagnostic centers, powered by Nomba Checkout.
+  <img src="./assets/banner.png" alt="CareLink Banner" width="100%">
 </p>
 
-<p align="center">
-Built for the <strong>DevCareer × Nomba Hackathon</strong>
-</p>
+# 🏥 CareLink
+
+> A lightweight payment verification system for diagnostic centers, powered by Nomba Checkout.
+
+Built for the **DevCareer × Nomba Hackathon**.
 
 ## 🔗 Live Demo
 
@@ -65,21 +65,21 @@ flowchart LR
     G --> B
 ```
 
-## Screenshots
+## 🚀 Workflow Preview
 
 | Dashboard | Register Patient |
 |-----------|------------------|
-| ![](./screenshots/dashboard.png) | ![](./screenshots/register.png) |
+| ![](./screenshots/dashboard0.png) | ![](./screenshots/register.png) |
 
-| Payment Verification |
-|----------------------|
-| ![](./screenshots/payment.png) |
+| Payment Link Generated | Payment Verified |
+|-------------------------|------------------|
+| ![](./screenshots/payment-link.png) | ![](./screenshots/payment.png) |
 
-## Live Demo
+| Updated Dashboard |
+|-----------|
+| ![](./screenshots/dashboard.png) | 
 
-Frontend: https://care-link-nine.vercel.app
 
-Backend: https://carelink-backend-5iet.onrender.com
 
 ## Run Locally
 
@@ -98,9 +98,12 @@ npm start
 ## Environment Variables
 
 ```env
-NOMBA_SECRET_KEY=your_secret_key
-WEBHOOK_SECRET=your_webhook_secret
-PORT=5000
+NOMBA_CLIENT_ID=your_key
+NOMBA_CLIENT_SECRET=your_secret_key
+NOMBA_PARENT_ACCOUNT_ID=your_ID
+NOMBA_SUB_ACCOUNT_ID=your_ID
+NOMBA_WEBHOOK_KEY=your_webhook_secret
+PORT=3000
 ```
 
 ## Future Improvements

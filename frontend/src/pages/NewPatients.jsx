@@ -125,7 +125,7 @@ const NewPatient = () => {
                 type="text"
                 name="name"
                 required
-                placeholder="e.g., Amina Ibrahim"
+                placeholder="e.g., Abu Ridwan"
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
