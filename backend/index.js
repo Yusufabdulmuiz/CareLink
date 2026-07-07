@@ -13,153 +13,177 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 const DATA_FILE = path.join(__dirname, 'patients.json');
+async function getNombaToken() {
+const response = await axios.post(
+'https://api.nomba.com/v1/auth/token/issue',
+{
+grant_type: 'client_credentials',
+client_id: process.env.NOMBA_CLIENT_ID,
+client_secret: process.env.NOMBA_CLIENT_SECRET,
+},
+{
+headers: {
+'Content-Type': 'application/json',
+accountId: process.env.NOMBA_PARENT_ACCOUNT_ID,
+},
+}
+);
 
+return response.data.data.access_token;
+
+}
 const getPatientsFromFile = () => {
-    try {
-        if (!fs.existsSync(DATA_FILE)) {
-            fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
-            return [];
-        }
-        return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8') || '[]');
-    } catch (error) {
-        return [];
-    }
+try {
+if (!fs.existsSync(DATA_FILE)) {
+fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
+return [];
+}
+return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8') || '[]');
+} catch (error) {
+return [];
+}
 };
 
 const savePatientsToFile = (data) => {
-    try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    } catch (error) {}
+try {
+fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+} catch (error) {}
 };
 
 app.get('/api/patients', (req, res) => {
-    res.status(200).json(getPatientsFromFile());
+res.status(200).json(getPatientsFromFile());
 });
 
 app.post('/api/patients', async (req, res) => {
-    const { name, phone, testType, amount } = req.body;
-    const orderReference = `ORD-${Date.now()}`;
+const { name, phone, testType, amount } = req.body;
+const orderReference = ORD-${Date.now()};
 
-    try {
-        const response = await axios.post('https://api.nomba.com/v1/checkout/order', {
-            order: {
-                orderReference,
-                amount: amount.toString(),
-                currency: "NGN",
-                customerEmail: "test@carelink.com",
-                accountId: process.env.NOMBA_SUB_ACCOUNT_ID,
-                callbackUrl:`${process.env.BASE_URL}/api/webhook`
-            }
-        }, {
-            headers: { 'Content-Type': 'application/json', 'accountId': process.env.NOMBA_PARENT_ACCOUNT_ID }
-        });
+try {  
+const token = await getNombaToken();  
+    const response = await axios.post('https://api.nomba.com/v1/checkout/order', {  
+        order: {  
+            orderReference,  
+            amount: amount.toString(),  
+            currency: "NGN",  
+            customerEmail: "test@carelink.com",  
+            accountId: process.env.NOMBA_SUB_ACCOUNT_ID,  
+            callbackUrl:`${process.env.BASE_URL}/api/webhook`  
+        }  
+    }, {  
+        headers: {  
+'Content-Type': 'application/json',  
+accountId: process.env.NOMBA_PARENT_ACCOUNT_ID,  
+Authorization: `Bearer ${token}`,
 
-        const newPatient = {
-            id: `pat_${Date.now()}`,
-            orderReference,
-            name,
-            phone,
-            testType,
-            amount,
-            status: "pending",
-            checkoutUrl: response.data.data.checkoutLink
-        };
+}
+});
 
-        const patients = getPatientsFromFile();
-        patients.push(newPatient);
-        savePatientsToFile(patients);
+const newPatient = {  
+        id: `pat_${Date.now()}`,  
+        orderReference,  
+        name,  
+        phone,  
+        testType,  
+        amount,  
+        status: "pending",  
+        checkoutUrl: response.data.data.checkoutLink  
+    };  
 
-        res.status(201).json(newPatient);
-    } catch (error) {
-    console.error("========== NOMBA API ERROR ==========");
-    console.error("Status:", error.response?.status);
-    console.error("Response:", JSON.stringify(error.response?.data, null, 2));
-    console.error("Message:", error.message);
-    console.error("=====================================");
+    const patients = getPatientsFromFile();  
+    patients.push(newPatient);  
+    savePatientsToFile(patients);  
 
-    res.status(500).json({
-        message:
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            error.message ||
-            "Failed to generate payment link"
-    });
-    }
+    res.status(201).json(newPatient);  
+} catch (error) {  
+console.error("========== NOMBA API ERROR ==========");  
+console.error("Status:", error.response?.status);  
+console.error("Response:", JSON.stringify(error.response?.data, null, 2));  
+console.error("Message:", error.message);  
+console.error("=====================================");  
+
+res.status(500).json({  
+    message:  
+        error.response?.data?.message ||  
+        error.response?.data?.error ||  
+        error.message ||  
+        "Failed to generate payment link"  
+});  
+}
+
 });
 
 app.post('/api/webhook', (req, res) => {
-    const nombaSignature = req.headers['nomba-signature'];
-    const webhookKey = process.env.NOMBA_WEBHOOK_KEY;
+const nombaSignature = req.headers['nomba-signature'];
+const webhookKey = process.env.NOMBA_WEBHOOK_KEY;
 
-    if (webhookKey && nombaSignature) {
-        const hash = crypto.createHmac('sha512', webhookKey)
-            .update(JSON.stringify(req.body))
-            .digest('hex');
+if (webhookKey && nombaSignature) {  
+    const hash = crypto.createHmac('sha512', webhookKey)  
+        .update(JSON.stringify(req.body))  
+        .digest('hex');  
 
-        if (hash !== nombaSignature) return res.status(401).send('Unauthorized');
-    }
+    if (hash !== nombaSignature) return res.status(401).send('Unauthorized');  
+}  
 
-    const ref = req.body.data?.transaction?.merchantTxRef || req.body.data?.orderReference || req.body.orderReference;
-    const eventType = req.body.event_type || req.body.status;
+const ref = req.body.data?.transaction?.merchantTxRef || req.body.data?.orderReference || req.body.orderReference;  
+const eventType = req.body.event_type || req.body.status;  
 
-    if (ref && (eventType === 'payment_success' || eventType === 'SUCCESS')) {
-        const patients = getPatientsFromFile();
-        const patientIndex = patients.findIndex(p => p.orderReference === ref);
+if (ref && (eventType === 'payment_success' || eventType === 'SUCCESS')) {  
+    const patients = getPatientsFromFile();  
+    const patientIndex = patients.findIndex(p => p.orderReference === ref);  
 
-        if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {
-            patients[patientIndex].status = "paid";
-            savePatientsToFile(patients);
-        }
-    }
-    res.status(200).send('OK');
+    if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {  
+        patients[patientIndex].status = "paid";  
+        savePatientsToFile(patients);  
+    }  
+}  
+res.status(200).send('OK');
+
 });
 
 app.get('/api/webhook', (req, res) => {
-    const ref = req.query.orderReference || req.query.merchantTxRef || req.query.txref;
+const ref = req.query.orderReference || req.query.merchantTxRef || req.query.txref;
 
-    if (ref) {
-        const patients = getPatientsFromFile();
-        const patientIndex = patients.findIndex(p => p.orderReference === ref);
+if (ref) {  
+    const patients = getPatientsFromFile();  
+    const patientIndex = patients.findIndex(p => p.orderReference === ref);  
 
-        if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {
-            patients[patientIndex].status = "paid";
-            savePatientsToFile(patients);
-        }
-    }
-    res.send(`
-<!DOCTYPE html>
-<html>
-<head>
-<title>CareLink</title>
-<style>
-body{
-font-family:Arial;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-background:#f5fffc;
-}
-.card{
-padding:40px;
-border-radius:12px;
-box-shadow:0 5px 20px rgba(0,0,0,.08);
-text-align:center;
-}
-h2{
-color:#0d9488;
-}
-</style>
-</head>
-<body>
-<div class="card">
-<h2>✅ Payment Verified</h2>
-<p>Your payment has been received successfully.</p>
-<p>You may now close this page.</p>
-</div>
-</body>
-</html>
-`);
-});
+    if (patientIndex !== -1 && patients[patientIndex].status !== 'paid') {  
+        patients[patientIndex].status = "paid";  
+        savePatientsToFile(patients);  
+    }  
+}  
+res.send(`
 
-app.listen(PORT);
+<!DOCTYPE html>  <html>  
+<head>  
+<title>CareLink</title>  
+<style>  
+body{  
+font-family:Arial;  
+display:flex;  
+justify-content:center;  
+align-items:center;  
+height:100vh;  
+background:#f5fffc;  
+}  
+.card{  
+padding:40px;  
+border-radius:12px;  
+box-shadow:0 5px 20px rgba(0,0,0,.08);  
+text-align:center;  
+}  
+h2{  
+color:#0d9488;  
+}  
+</style>  
+</head>  
+<body>  
+<div class="card">  
+<h2>✅ Payment Verified</h2>  
+<p>Your payment has been received successfully.</p>  
+<p>You may now close this page.</p>  
+</div>  
+</body>  
+</html>  
+`);  
+});  app.listen(PORT);
