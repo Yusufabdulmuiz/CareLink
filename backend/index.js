@@ -56,7 +56,7 @@ res.status(200).json(getPatientsFromFile());
 
 app.post('/api/patients', async (req, res) => {
 const { name, phone, testType, amount } = req.body;
-const orderReference = ORD-${Date.now()};
+const orderReference = `ORD-${Date.now()}`;
 
 try {  
 const token = await getNombaToken();  
