@@ -71,7 +71,19 @@ app.post('/api/patients', async (req, res) => {
 
         res.status(201).json(newPatient);
     } catch (error) {
-        res.status(500).json({ error: "Failed to generate payment link" });
+    console.error("========== NOMBA API ERROR ==========");
+    console.error("Status:", error.response?.status);
+    console.error("Response:", JSON.stringify(error.response?.data, null, 2));
+    console.error("Message:", error.message);
+    console.error("=====================================");
+
+    res.status(500).json({
+        message:
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            error.message ||
+            "Failed to generate payment link"
+    });
     }
 });
 
