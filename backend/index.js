@@ -41,7 +41,7 @@ app.post('/api/patients', async (req, res) => {
     const orderReference = `ORD-${Date.now()}`;
 
     try {
-        const response = await axios.post('https://sandbox.nomba.com/v1/checkout/order', {
+        const response = await axios.post('https://api.nomba.com/v1/checkout/order', {
             order: {
                 orderReference,
                 amount: amount.toString(),
